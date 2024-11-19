@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="./resources/ol.css">
+        <link rel="stylesheet" href="./resources/fontawesome-all.min.css">
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+        <style>
+            html, body, #map {
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            #filter-control {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background: white;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                z-index: 1000;
+            }
+            #legend-container {
+                position: absolute;
+                top: 20px;
+                left: 10px;
+                background: white;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                z-index: 1000;
+                font-size: 12px;
+            }
+            #calculator-button {
+                position: absolute;
+                bottom: 20px;
+                left: 20px;
+                background: white;
+                padding: 10px;
+                border-radius: 5px;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                cursor: pointer;
+                z-index: 1000;
+                font-size: 14px;
+            }
+            #calculator-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 2000;
+            }
+            #calculator {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+                width: 300px;
+                text-align: center;
+            }
+            #calculator h3 {
+                margin-top: 0;
+            }
+            #calculator button {
+                margin-top: 10px;
+            }
+            #result {
+                margin-top: 15px;
+                padding: 10px;
+                background-color: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+            #close-modal {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+        <title>Mapa Interactivo con Calculadora</title>
+    </head>
+    <body>
+        <!-- Contenedor para el filtro -->
+        <div id="filter-control">
+            <label for="region-filter"><strong>Filtrar por Región:</strong></label>
+            <select id="region-filter">
+                <option value="all">Todas las regiones</option>
+                <option value="Región Metropolitana de Santiago">Región Metropolitana de Santiago</option>
+            </select>
+        </div>
+
+        <!-- Contenedor para la leyenda -->
+        <div id="legend-container">
+            <h4>Tarifas por Comuna</h4>
+            <ul style="list-style: none; padding: 0;">
+                <li style="color: #fee5d9;">⬤ Menor tarifa</li>
+                <li style="color: #fc9272;">⬤ Tarifa media</li>
+                <li style="color: #de2d26;">⬤ Mayor tarifa</li>
+            </ul>
+        </div>
+
+        <!-- Botón para abrir la calculadora -->
+        <div id="calculator-button" onclick="toggleCalculator()">Abrir Calculadora</div>
+
+        <!-- Modal de la calculadora -->
+        <div id="calculator-modal" class="hidden">
+            <div id="calculator">
+                <h3>Calculadora de Tarifas</h3>
+                <label for="comuna">Seleccione su comuna:</label>
+                <select id="comuna">
+                    <option value="" disabled selected>Seleccione</option>
+                    <option value="128.52476">Cerrillos</option>
+                    <option value="128.54142">Cerro Navia</option>
+                    <option value="128.51167">Conchalí</option>
+                    <option value="128.50691">Estación Central</option>
+                    <option value="128.45812">Huechuraba</option>
+                    <option value="128.45098">Independencia</option>
+                    <option value="128.47954">La Cisterna</option>
+                    <option value="128.52595">La Florida</option>
+                    <option value="128.51286">La Granja</option>
+                    <option value="128.63781">La Pintana</option>
+                    <option value="128.48906">La Reina</option>
+                    <option value="128.45217">Las Condes</option>
+                    <option value="128.45931">Lo Barnechea</option>
+                    <option value="128.52119">Lo Espejo</option>
+                    <option value="128.53071">Lo Prado</option>
+                    <option value="128.50810">Macul</option>
+                    <option value="151.27875">Maipu</option>
+                    <option value="151.09787">Ñuñoa</option>
+                    <option value="151.24424">Pedro Aguirre Cerda</option>
+                    <option value="148.86305">Peñalolen</option>
+                    <option value="151.07883">Providencia</option>
+                    <option value="151.24067">Pudahuel</option>
+                    <option value="151.26685">Quilicura</option>
+                    <option value="151.15499">Quinta Normal</option>
+                    <option value="151.13952">Recoleta</option>
+                    <option value="146.12129">Renca</option>
+                    <option value="151.13595">San Joaquin</option>
+                    <option value="151.15380">San Miguel</option>
+                    <option value="151.23115">San Ramon</option>
+                    <option value="150.98006">Santiago</option>
+                    <option value="151.08716">Vitacura</option>
+                </select>
+                <br><br>
+                <label for="consumo">Consumo en kWh:</label>
+                <input type="number" id="consumo" placeholder="Ingrese su consumo" min="0">
+                <br><br>
+                <button onclick="calcularTarifa()">Calcular</button>
+                <div id="result"></div>
+            </div>
+            <button id="close-modal" onclick="toggleCalculator()">✖</button>
+        </div>
+
+        <!-- Contenedor del mapa -->
+        <div id="map">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
+        </div>
+
+        <script src="resources/qgis2web_expressions.js"></script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+        <script src="layers/comunas_0.js"></script>
+        <script src="styles/comunas_0_style.js"></script>
+        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./resources/Autolinker.min.js"></script>
+        <script src="./resources/qgis2web.js"></script>
+
+        <script>
+            function toggleCalculator() {
+                const modal = document.getElementById('calculator-modal');
+                if (!modal) {
+                    console.error("El modal no existe en el DOM.");
+                    return;
+                }
+                if (modal.classList.contains('hidden')) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            function calcularTarifa() {
+                const comunaTarifa = parseFloat(document.getElementById('comuna').value
+		const consumo = parseFloat(document.getElementById('consumo').value);
+
+                if (isNaN(comunaTarifa) || isNaN(consumo) || consumo <= 0) {
+                    document.getElementById('result').innerHTML = "<strong>Error:</strong> Complete todos los campos correctamente.";
+                    return;
+                }
+
+                const costoMensual = (comunaTarifa * consumo).toFixed(2);
+                document.getElementById('result').innerHTML = `<strong>Costo mensual:</strong> $${costoMensual} CLP.`;
+            }
+
+            function setPopupContent(properties) {
+                return `
+                    <div class="custom-popup">
+                        <h3>${properties.Comuna}</h3>
+                        <p><strong>Región:</strong> ${properties.Region}</p>
+                        <p><strong>Provincia:</strong> ${properties.Provincia}</p>
+                        <p><strong>Tarifa BT1:</strong> ${properties.Tarifas_Nuevas_BT1} CLP</p>
+                        <p><strong>Tarifa con IVA:</strong> ${properties.Tarifas_Nuevas_Iva} CLP</p>
+                    </div>`;
+            }
+
+            const popupElement = document.getElementById('popup');
+            const popupContentElement = document.getElementById('popup-content');
+            const closer = document.getElementById('popup-closer');
+
+            if (typeof map !== 'undefined') {
+                const popup = new ol.Overlay({
+                    element: popupElement,
+                    autoPan: true,
+                    autoPanAnimation: {
+                        duration: 250,
+                    },
+                });
+
+                closer.onclick = function () {
+                    popup.setPosition(undefined);
+                    closer.blur();
+                    return false;
+                };
+
+                map.addOverlay(popup);
+
+                map.on('singleclick', function (evt) {
+                    const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+                        return feature;
+                    });
+
+                    if (feature) {
+                        const properties = feature.getProperties();
+                        popupContentElement.innerHTML = setPopupContent(properties);
+                        popup.setPosition(evt.coordinate);
+                    } else {
+                        popup.setPosition(undefined);
+                    }
+                });
+            }
+
+            const filterControl = document.getElementById('region-filter');
+            filterControl.addEventListener('change', function () {
+                const selectedRegion = this.value;
+
+                if (typeof comunas_0 !== 'undefined') {
+                    comunas_0.getSource().getFeatures().forEach(function (feature) {
+                        const region = feature.get('Region');
+                        if (selectedRegion === 'all' || region === selectedRegion) {
+                            feature.setStyle(null); // Mostrar
+                        } else {
+                            feature.setStyle(new ol.style.Style({})); // Ocultar
+                        }
+                    });
+                } else {
+                    console.error('No se encontró la capa comunas_0.');
+                }
+            });
+        </script>
+    </body>
+</html>
+
